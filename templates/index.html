@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DispatchIQ - Bus Transit Booking</title>
+    <style>
+        :root {
+            --bg-base: #121212;
+            --bg-card: #1c1c1c;
+            --bg-input: #18181b;
+            --border-color: #27272a;
+            --text-main: #f4f4f5;
+            --text-muted: #a1a1aa;
+            --accent-emerald: #10b981;
+            --accent-emerald-hover: #059669;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: var(--font-family);
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand-logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: -0.025em;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .brand-logo span {
+            color: var(--accent-emerald);
+        }
+
+        nav {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.15s ease;
+        }
+
+        nav a:hover {
+            color: var(--text-main);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 2.5rem auto;
+            padding: 0 1.5rem;
+            width: 100%;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .action-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.25rem;
+        }
+
+        .action-card h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: var(--text-main);
+        }
+
+        .action-card p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .booking-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+        }
+
+        .card-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .card-header p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.75rem;
+            color: var(--text-main);
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.15s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            border-color: var(--accent-emerald);
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin: 1.5rem 0;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            padding: 1rem;
+            border-radius: 6px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            cursor: pointer;
+            color: var(--text-main);
+            font-size: 0.9rem;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            accent-color: var(--accent-emerald);
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background-color: var(--accent-emerald);
+            color: #000;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            padding: 0.85rem;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+
+        .btn-submit:hover {
+            background-color: var(--accent-emerald-hover);
+        }
+
+        .error-msg {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #f87171;
+            padding: 0.75rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="brand-logo" id="nav-brand" data-testid="nav-brand">
+            <span>Dispatch</span>IQ
+        </div>
+        <nav>
+            <a href="/" id="nav-home" data-testid="nav-home">Home</a>
+            {% if user %}
+                <a href="/dashboard" id="nav-dashboard" data-testid="nav-dashboard">Dashboard</a>
+                <a href="/logout" id="nav-logout" data-testid="nav-logout">Logout</a>
+            {% else %}
+                <a href="/dashboard" id="nav-dashboard" data-testid="nav-dashboard" style="display:none;">Dashboard</a>
+                <a href="/login" id="nav-login" data-testid="nav-login">Login</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <main class="container">
+        <div class="quick-actions">
+            <div class="action-card" id="card-guest-quickbook" data-testid="card-guest-quickbook">
+                <h3>Guest Quick-Book</h3>
+                <p>Purchase tickets directly without creating an account.</p>
+            </div>
+            <div class="action-card" id="card-login-saved-passes" data-testid="card-login-saved-passes">
+                <h3>Log In for Saved Passes</h3>
+                <p>Access your ticket history and saved boarding passes.</p>
+            </div>
+        </div>
+
+        <div class="booking-card">
+            <div class="card-header">
+                <h2>Digital Bus Ticket Booking</h2>
+                <p>Select your route and fare options below</p>
+            </div>
+
+            {% if error_msg %}
+                <div id="error_msg" data-testid="error-msg" class="error-msg">
+                    {{ error_msg }}
+                </div>
+            {% endif %}
+
+            <form action="/book" method="post" id="booking-form" data-testid="booking-form">
+                <div class="form-group">
+                    <label for="passenger_name">Passenger Name</label>
+                    <input type="text" id="passenger_name" name="passenger_name" data-testid="input-passenger-name" placeholder="Enter passenger name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="passenger_age">Passenger Age (0 - 120)</label>
+                    <input type="number" id="passenger_age" name="passenger_age" data-testid="input-passenger-age" placeholder="Enter age" min="0" max="120" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="route_id">Select Route</label>
+                    <select id="route_id" name="route_id" data-testid="input-route-id" required>
+                        {% for r in routes %}
+                            <option value="{{ r.route_id }}">{{ r.route_id }}: {{ r.origin }} to {{ r.destination }} (Capacity: {{ r.capacity - r.booked_seats }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="checkbox-group">
+                    <label class="checkbox-label" for="is_peak">
+                        <input type="checkbox" id="is_peak" name="is_peak" value="true" data-testid="check-peak">
+                        Peak Travel Hours
+                    </label>
+                    <label class="checkbox-label" for="is_frequent">
+                        <input type="checkbox" id="is_frequent" name="is_frequent" value="true" data-testid="check-frequent">
+                        Frequent Rider Pass
+                    </label>
+                    <label class="checkbox-label" for="is_holiday">
+                        <input type="checkbox" id="is_holiday" name="is_holiday" value="true" data-testid="check-holiday">
+                        Public Holiday
+                    </label>
+                </div>
+
+                <button type="submit" id="book_btn" data-testid="btn-book-ticket" class="btn-submit">
+                    Calculate Fare & Book Ticket
+                </button>
+            </form>
+        </div>
+    </main>
+</body>
+</html>

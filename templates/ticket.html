@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Confirmation - DispatchIQ</title>
+    <style>
+        :root {
+            --bg-base: #121212;
+            --bg-card: #1c1c1c;
+            --bg-input: #18181b;
+            --border-color: #27272a;
+            --text-main: #f4f4f5;
+            --text-muted: #a1a1aa;
+            --accent-emerald: #10b981;
+            --accent-emerald-hover: #059669;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: var(--font-family);
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand-logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: -0.025em;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .brand-logo span {
+            color: var(--accent-emerald);
+        }
+
+        nav {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.15s ease;
+        }
+
+        nav a:hover {
+            color: var(--text-main);
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 3rem auto;
+            padding: 0 1.5rem;
+            width: 100%;
+        }
+
+        .ticket-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card-header h2 {
+            font-size: 1.35rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .status-badge {
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-issued {
+            background-color: rgba(234, 179, 8, 0.15);
+            color: #facc15;
+            border: 1px solid rgba(234, 179, 8, 0.3);
+        }
+
+        .status-paid {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: var(--accent-emerald);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-validated {
+            background-color: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px dashed var(--border-color);
+            font-size: 0.95rem;
+        }
+
+        .detail-label {
+            color: var(--text-muted);
+        }
+
+        .detail-value {
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        .payment-section {
+            margin-top: 1.75rem;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.25rem;
+        }
+
+        .payment-section h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-main);
+        }
+
+        .payment-gateways {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .gateway-option {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.75rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--text-main);
+        }
+
+        .gateway-option input[type="radio"] {
+            accent-color: var(--accent-emerald);
+        }
+
+        .qr-box {
+            margin-top: 1.75rem;
+            background-color: #000;
+            border: 2px dashed var(--accent-emerald);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .qr-title {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .qr-token {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent-emerald);
+            letter-spacing: 0.1em;
+            word-break: break-all;
+            background-color: rgba(16, 185, 129, 0.1);
+            padding: 0.75rem;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .action-group {
+            margin-top: 1.5rem;
+        }
+
+        .btn-action {
+            width: 100%;
+            background-color: var(--accent-emerald);
+            color: #000;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            padding: 0.85rem;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+
+        .btn-action:hover {
+            background-color: var(--accent-emerald-hover);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="brand-logo" id="nav-brand" data-testid="nav-brand">
+            <span>Dispatch</span>IQ
+        </div>
+        <nav>
+            <a href="/" id="nav-home" data-testid="nav-home">Home</a>
+            {% if user %}
+                <a href="/dashboard" id="nav-dashboard" data-testid="nav-dashboard">Dashboard</a>
+                <a href="/logout" id="nav-logout" data-testid="nav-logout">Logout</a>
+            {% else %}
+                <a href="/dashboard" id="nav-dashboard" data-testid="nav-dashboard" style="display:none;">Dashboard</a>
+                <a href="/login" id="nav-login" data-testid="nav-login">Login</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <main class="container">
+        <div class="ticket-card" id="ticket-details-card" data-testid="ticket-details-card">
+            <div class="card-header">
+                <h2>Boarding Pass</h2>
+                <span id="ticket_status" data-testid="ticket-status" class="status-badge {% if ticket.state == 'PAID' %}status-paid{% elif ticket.state == 'VALIDATED' %}status-validated{% else %}status-issued{% endif %}">
+                    {{ ticket.state }}
+                </span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Ticket ID</span>
+                <span class="detail-value" id="ticket_id" data-testid="ticket-id">{{ ticket.ticket_id }}</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Passenger Name</span>
+                <span class="detail-value" id="passenger_display" data-testid="passenger-display">{{ ticket.passenger_name }}</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Route</span>
+                <span class="detail-value" id="route_display" data-testid="route-display">{{ ticket.route_id }}</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Fare Total</span>
+                <span class="detail-value" id="fare_display" data-testid="fare-display">{{ ticket.fare }} ETB</span>
+            </div>
+
+            {% if ticket.state == 'ISSUED' %}
+                <form action="/ticket/{{ ticket.ticket_id }}/pay" method="post" id="payment-form" data-testid="payment-form">
+                    <div class="payment-section">
+                        <h3>Select Payment Gateway</h3>
+                        <div class="payment-gateways">
+                            <label class="gateway-option">
+                                <input type="radio" name="gateway" value="telebirr" id="radio-pay-telebirr" data-testid="radio-pay-telebirr" checked>
+                                Telebirr
+                            </label>
+                            <label class="gateway-option">
+                                <input type="radio" name="gateway" value="chapa" id="radio-pay-chapa" data-testid="radio-pay-chapa">
+                                Chapa
+                            </label>
+                        </div>
+                        <button type="submit" id="pay_btn" data-testid="btn-confirm-payment" class="btn-action">
+                            Simulate Electronic Payment
+                        </button>
+                    </div>
+                </form>
+            {% else %}
+                <div id="qr-container" data-testid="qr-container">
+                    <div id="qr_section" class="qr-box">
+                        <div class="qr-title">Digital QR Boarding Token</div>
+                        <code id="qr_code_display" data-testid="qr-token-value" class="qr-token">{{ ticket.qr_code }}</code>
+                    </div>
+                </div>
+
+                {% if ticket.state == 'PAID' %}
+                    <div class="action-group">
+                        <form action="/ticket/{{ ticket.ticket_id }}/scan" method="post">
+                            <button type="submit" id="scan_btn" data-testid="btn-conductor-scan" class="btn-action">
+                                Scan at Conductor Terminal
+                            </button>
+                        </form>
+                    </div>
+                {% endif %}
+            {% endif %}
+        </div>
+    </main>
+</body>
+</html>
