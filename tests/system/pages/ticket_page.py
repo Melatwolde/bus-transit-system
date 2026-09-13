@@ -1,4 +1,6 @@
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 class TicketPage:
     def __init__(self, driver):
@@ -20,6 +22,12 @@ class TicketPage:
 
     def pay(self):
         self.driver.find_element(*self.pay_btn).click()
+        WebDriverWait(self.driver, 5).until(
+            EC.text_to_be_present_in_element(self.status, "PAID")
+        )
 
     def scan(self):
         self.driver.find_element(*self.scan_btn).click()
+        WebDriverWait(self.driver, 5).until(
+            EC.text_to_be_present_in_element(self.status, "VALIDATED")
+        )
