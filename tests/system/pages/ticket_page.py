@@ -23,10 +23,11 @@ class TicketPage:
     def pay(self):
         self.driver.find_element(*self.pay_btn).click()
         WebDriverWait(self.driver, 5).until(
-            lambda d: "PAID" in d.find_element(*self.status).text
+            EC.text_to_be_present_in_element(self.status, "PAID")
         )
+
     def scan(self):
         self.driver.find_element(*self.scan_btn).click()
         WebDriverWait(self.driver, 5).until(
-            lambda d: "VALIDATED" in d.find_element(*self.status).text
+            EC.text_to_be_present_in_element(self.status, "VALIDATED")
         )
