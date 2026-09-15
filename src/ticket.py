@@ -1,8 +1,19 @@
+import os
 import uuid
 import hashlib
 import time
 from enum import Enum
-from typing import Optional, Union
+from pathlib import Path
+from typing import Optional, Union, Dict, Any
+import requests
+from dotenv import load_dotenv
+
+# Ensure root .env is loaded if available
+_env_path = Path(__file__).resolve().parent.parent / ".env"
+if _env_path.exists():
+    load_dotenv(dotenv_path=_env_path)
+else:
+    load_dotenv()
 
 
 class IllegalStateTransitionError(ValueError):
@@ -24,6 +35,110 @@ class TicketState(str, Enum):
 class PaymentGatewayInterface:
     def charge(self, amount: float) -> bool:
         raise NotImplementedError("Real gateway unreachable in unit test")
+
+
+class DefaultPaymentGateway(PaymentGatewayInterface):
+    def charge(self, amount: float) -> bool:
+        return True
+
+
+class ChapaTestPaymentGateway(PaymentGatewayInterface):
+    INITIALIZE_URL = "https://api.chapa.co/v1/transaction/initialize"
+
+    def __init__(
+        self,
+        secret_key: Optional[str] = None,
+        email: Optional[str] = None,
+        first_name: Optional[str] = None,
+        last_name: Optional[str] = None,
+        phone_number: Optional[str] = None,
+        tx_ref: Optional[str] = None,
+        currency: str = "ETB",
+        callback_url: Optional[str] = None,
+        return_url: Optional[str] = None,
+        customization_title: str = "Bus Ticket Payment",
+        customization_description: str = "Bus Transit Ticket Payment",
+    ):
+        self.secret_key = secret_key or os.getenv("CHAPA_SECRET_KEY")
+        self.email = email or "passenger@example.com"
+        self.first_name = first_name or "Passenger"
+        self.last_name = last_name or "Customer"
+        self.phone_number = phone_number
+        self.tx_ref = tx_ref
+        self.currency = currency
+        self.callback_url = callback_url
+        self.return_url = return_url
+        self.customization_title = customization_title
+        self.customization_description = customization_description
+
+        self.checkout_url: Optional[str] = None
+        self.last_response: Optional[Dict[str, Any]] = None
+        self.last_status_code: Optional[int] = None
+        self.last_error: Optional[str] = None
+
+    def charge(self, amount: float, **kwargs) -> bool:
+        if not self.secret_key:
+            self.last_error = "CHAPA_SECRET_KEY is not configured"
+            return False
+
+        email = kwargs.get("email", self.email)
+        first_name = kwargs.get("first_name", self.first_name)
+        last_name = kwargs.get("last_name", self.last_name)
+        phone_number = kwargs.get("phone_number", self.phone_number)
+        currency = kwargs.get("currency", self.currency)
+        tx_ref = kwargs.get("tx_ref", self.tx_ref) or f"chapa-{uuid.uuid4().hex[:12]}"
+        callback_url = kwargs.get("callback_url", self.callback_url)
+        return_url = kwargs.get("return_url", self.return_url)
+        title = kwargs.get("title", self.customization_title)
+        description = kwargs.get("description", self.customization_description)
+
+        headers = {
+            "Authorization": f"Bearer {self.secret_key}",
+            "Content-Type": "application/json",
+        }
+
+        payload: Dict[str, Any] = {
+            "amount": str(amount),
+            "currency": currency,
+            "email": email,
+            "first_name": first_name,
+            "last_name": last_name,
+            "tx_ref": tx_ref,
+        }
+        if phone_number:
+            payload["phone_number"] = phone_number
+        if callback_url:
+            payload["callback_url"] = callback_url
+        if return_url:
+            payload["return_url"] = return_url
+        if title:
+            payload["customization[title]"] = title
+        if description:
+            payload["customization[description]"] = description
+
+        try:
+            response = requests.post(
+                self.INITIALIZE_URL,
+                json=payload,
+                headers=headers,
+                timeout=10,
+            )
+            self.last_status_code = response.status_code
+            try:
+                data = response.json()
+            except Exception:
+                data = {"message": response.text, "status": "failed"}
+            self.last_response = data
+
+            if response.status_code == 200 and data.get("status") == "success":
+                data_obj = data.get("data")
+                if isinstance(data_obj, dict):
+                    self.checkout_url = data_obj.get("checkout_url")
+                return True
+            return False
+        except Exception as e:
+            self.last_error = str(e)
+            return False
 
 
 class Ticket:

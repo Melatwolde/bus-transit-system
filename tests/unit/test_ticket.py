@@ -321,3 +321,126 @@ def test_verify_token_edge_cases():
     # Cancelled ticket token verification should return False
     ticket.cancel()
     assert ticket.verify_token(ticket.verification_hash) is False
+
+
+def test_default_payment_gateway():
+    from src.ticket import DefaultPaymentGateway
+    gateway = DefaultPaymentGateway()
+    assert gateway.charge(100.0) is True
+
+
+def test_chapa_payment_gateway_success(monkeypatch):
+    from src.ticket import ChapaTestPaymentGateway
+
+    recorded_request = {}
+
+    class MockResponse:
+        status_code = 200
+        headers = {"Content-Type": "application/json"}
+        text = '{"status":"success","message":"Hosted Link","data":{"checkout_url":"https://checkout.chapa.co/test"}}'
+
+        def json(self):
+            import json
+            return json.loads(self.text)
+
+    def mock_post(url, json=None, headers=None, timeout=None):
+        recorded_request["url"] = url
+        recorded_request["json"] = json
+        recorded_request["headers"] = headers
+        return MockResponse()
+
+    monkeypatch.setattr("requests.post", mock_post)
+
+    gateway = ChapaTestPaymentGateway(
+        secret_key="CHASECK_TEST-dummy",
+        email="melat@example.com",
+        first_name="Melat",
+        last_name="Wolde",
+        phone_number="0911000000",
+        tx_ref="test-ref-001",
+        callback_url="https://example.com/callback",
+        return_url="https://example.com/return",
+        customization_title="Special Bus",
+        customization_description="Special Ticket",
+    )
+
+    ticket = Ticket("Melat Wolde", 50.0, "R-101")
+    paid = ticket.pay(gateway)
+
+    assert paid is True
+    assert ticket.state == TicketState.PAID.value
+    assert gateway.checkout_url == "https://checkout.chapa.co/test"
+    assert gateway.last_status_code == 200
+    assert recorded_request["url"] == "https://api.chapa.co/v1/transaction/initialize"
+    assert recorded_request["headers"]["Authorization"] == "Bearer CHASECK_TEST-dummy"
+    assert recorded_request["json"]["amount"] == "50.0"
+    assert recorded_request["json"]["email"] == "melat@example.com"
+    assert recorded_request["json"]["phone_number"] == "0911000000"
+    assert recorded_request["json"]["customization[title]"] == "Special Bus"
+
+
+def test_chapa_payment_gateway_failure(monkeypatch):
+    from src.ticket import ChapaTestPaymentGateway
+
+    class MockFailedResponse:
+        status_code = 401
+        headers = {"Content-Type": "application/json"}
+        text = '{"status":"failed","message":"Invalid API Key","data":null}'
+
+        def json(self):
+            import json
+            return json.loads(self.text)
+
+    monkeypatch.setattr("requests.post", lambda url, json=None, headers=None, timeout=None: MockFailedResponse())
+
+    gateway = ChapaTestPaymentGateway(secret_key="invalid_key")
+    ticket = Ticket("Abebe", 30.0, "R-101")
+    paid = ticket.pay(gateway)
+
+    assert paid is False
+    assert ticket.state == TicketState.ISSUED.value
+    assert gateway.checkout_url is None
+    assert gateway.last_status_code == 401
+
+
+def test_chapa_payment_gateway_invalid_json(monkeypatch):
+    from src.ticket import ChapaTestPaymentGateway
+
+    class MockBadResponse:
+        status_code = 502
+        headers = {"Content-Type": "text/html"}
+        text = "Bad Gateway"
+
+        def json(self):
+            raise ValueError("No JSON")
+
+    monkeypatch.setattr("requests.post", lambda url, json=None, headers=None, timeout=None: MockBadResponse())
+
+    gateway = ChapaTestPaymentGateway(secret_key="some_key")
+    assert gateway.charge(40.0) is False
+    assert gateway.last_status_code == 502
+    assert gateway.last_response == {"message": "Bad Gateway", "status": "failed"}
+
+
+def test_chapa_payment_gateway_missing_secret_key(monkeypatch):
+    from src.ticket import ChapaTestPaymentGateway
+
+    monkeypatch.delenv("CHAPA_SECRET_KEY", raising=False)
+    gateway = ChapaTestPaymentGateway(secret_key=None)
+    assert gateway.charge(45.0) is False
+    assert gateway.last_error == "CHAPA_SECRET_KEY is not configured"
+
+
+def test_chapa_payment_gateway_network_exception(monkeypatch):
+    import requests
+    from src.ticket import ChapaTestPaymentGateway
+
+    def mock_post_raise(*args, **kwargs):
+        raise requests.RequestException("Network unreachable")
+
+    monkeypatch.setattr("requests.post", mock_post_raise)
+
+    gateway = ChapaTestPaymentGateway(secret_key="some_key")
+    assert gateway.charge(50.0) is False
+    assert "Network unreachable" in gateway.last_error
+

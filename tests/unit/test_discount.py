@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from itertools import product
 
 import pytest
@@ -79,3 +80,5 @@ def test_discount_cap_rejects_invalid_values():
         calculate_discount_rate(is_peak=False, discount_cap=101)
     with pytest.raises(TypeError):
         calculate_discount_rate(is_peak=False, discount_cap=40.0)
+=======
+>>>>>>> main
