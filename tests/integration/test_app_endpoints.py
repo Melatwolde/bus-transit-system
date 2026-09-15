@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 from src.app import app
+from src.ticket import ChapaTestPaymentGateway
 
 client = TestClient(app)
 
@@ -97,6 +98,15 @@ def test_pay_ticket_with_chapa_gateway(monkeypatch):
             import json
             return json.loads(self.text)
 
+    gateway_instance = None
+    original_init = ChapaTestPaymentGateway.__init__
+
+    def mock_init(self, *args, **kwargs):
+        nonlocal gateway_instance
+        original_init(self, *args, **kwargs)
+        gateway_instance = self
+
+    monkeypatch.setattr(ChapaTestPaymentGateway, "__init__", mock_init)
     monkeypatch.setattr("requests.post", lambda url, json=None, headers=None, timeout=None: MockResponse())
 
     # 1. Book a ticket
@@ -119,9 +129,14 @@ def test_pay_ticket_with_chapa_gateway(monkeypatch):
         follow_redirects=False
     )
     assert pay_res.status_code == 303
+    assert gateway_instance is not None
+    assert gateway_instance.checkout_url == "https://checkout.chapa.co/test-checkout"
+
+    # 3. Simulate return callback
+    return_res = client.get(f"/payment/return/{ticket_id}", follow_redirects=False)
+    assert return_res.status_code == 303
     ticket = tickets_db[ticket_id]
     assert ticket.state == "PAID"
-    assert getattr(ticket, "checkout_url", None) == "https://checkout.chapa.co/test-checkout"
 
 
 def test_pay_ticket_with_chapa_logged_in_user(monkeypatch):
@@ -174,6 +189,9 @@ def test_pay_ticket_with_chapa_logged_in_user(monkeypatch):
     assert captured_payload["json"]["email"] == "almaz@example.com"
     assert captured_payload["json"]["first_name"] == "Almaz"
     assert captured_payload["json"]["last_name"] == "Ayana"
+
+    # Simulate return callback for logged in user test as well
+    user_client.get(f"/payment/return/{ticket_id}", follow_redirects=False)
     assert tickets_db[ticket_id].state == "PAID"
 
 
@@ -199,4 +217,3 @@ def test_pay_ticket_with_telebirr_gateway():
     )
     assert pay_res.status_code == 303
     assert tickets_db[ticket_id].state == "PAID"
-
