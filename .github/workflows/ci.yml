@@ -25,6 +25,8 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Unit and Integration Tests (Coverage Build Gate)
+        env:
+          CHAPA_SECRET_KEY: CHASECK_TEST-dummy-key
         run: |
           pytest tests/unit tests/integration \
             --cov=src \
@@ -33,5 +35,7 @@ jobs:
             --cov-fail-under=80
 
       - name: Run Selenium Headless System Tests
+        env:
+          CHAPA_SECRET_KEY: CHASECK_TEST-dummy-key
         run: |
           pytest tests/system/test_e2e_booking.py

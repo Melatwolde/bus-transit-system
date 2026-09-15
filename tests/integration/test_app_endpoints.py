@@ -89,6 +89,8 @@ def test_ticket_not_found_branches():
 def test_pay_ticket_with_chapa_gateway(monkeypatch):
     from src.app import tickets_db
 
+    monkeypatch.setenv("CHAPA_SECRET_KEY", "CHASECK_TEST-dummy-key")
+
     class MockResponse:
         status_code = 200
         headers = {"Content-Type": "application/json"}
@@ -141,6 +143,8 @@ def test_pay_ticket_with_chapa_gateway(monkeypatch):
 
 def test_pay_ticket_with_chapa_logged_in_user(monkeypatch):
     from src.app import tickets_db
+
+    monkeypatch.setenv("CHAPA_SECRET_KEY", "CHASECK_TEST-dummy-key")
 
     captured_payload = {}
 
