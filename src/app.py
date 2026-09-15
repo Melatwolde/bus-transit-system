@@ -2,11 +2,14 @@ from fastapi import FastAPI, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
+from typing import Optional
+import time
+import uuid
 
 from src.fare import calculate_base_fare
 from src.discount import calculate_discount_rate
 from src.fleet import BusRoute
-from src.ticket import Ticket, PaymentGatewayInterface
+from src.ticket import Ticket, PaymentGatewayInterface, ChapaTestPaymentGateway, TicketState
 
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key="dispatch-iq-auth-secret-key-2026")
@@ -100,13 +103,44 @@ def get_ticket(request: Request, ticket_id: str):
     })
 
 @app.post("/ticket/{ticket_id}/pay")
-def pay_ticket(ticket_id: str, gateway: str = Form("telebirr")):
+def pay_ticket(request: Request, ticket_id: str, gateway: str = Form("telebirr")):
     ticket = tickets_db.get(ticket_id)
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
-    ticket.pay(DefaultPaymentGateway())
-    return RedirectResponse(url=f"/ticket/{ticket_id}", status_code=303)
 
+    selected_gateway = gateway.strip().lower() if gateway else "telebirr"
+    if selected_gateway == "chapa":
+        user = get_current_user(request)
+        names = ticket.passenger_name.strip().split(" ", 1)
+        first_name = names[0] if names else "Passenger"
+        last_name = names[1] if len(names) > 1 else "Customer"
+        safe_name = first_name.lower().replace(" ", "")
+        email = user.get("email") if user and user.get("email") else "test@chapa.co"
+        tx_ref = f"tx-{ticket.ticket_id}-{uuid.uuid4().hex[:8]}"
+        return_url = str(request.url_for("payment_return", ticket_id=ticket.ticket_id))
+        chapa_gateway = ChapaTestPaymentGateway(
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            tx_ref=tx_ref,
+        return_url=return_url,
+        )
+        
+        success = ticket.pay(chapa_gateway)
+        
+        # Print debug info to your terminal to see why Chapa failed
+        print("Chapa Success:", success)
+        print("Chapa Last Status Code:", chapa_gateway.last_status_code)
+        print("Chapa Last Response:", chapa_gateway.last_response)
+        print("Chapa Last Error:", chapa_gateway.last_error)
+        print("Chapa Secret Key Loaded?:", bool(chapa_gateway.secret_key))
+
+        if getattr(chapa_gateway, "checkout_url", None):
+            return RedirectResponse(url=chapa_gateway.checkout_url, status_code=303)
+    else:
+        ticket.pay(DefaultPaymentGateway())
+
+    return RedirectResponse(url=f"/ticket/{ticket_id}", status_code=303)
 @app.post("/ticket/{ticket_id}/scan")
 def scan_ticket(ticket_id: str):
     ticket = tickets_db.get(ticket_id)
@@ -195,3 +229,13 @@ def get_dashboard(request: Request):
         "user": user,
         "tickets": user_tickets
     })
+@app.get("/payment/return/{ticket_id}")
+def payment_return(request: Request, ticket_id: str, tx_ref: Optional[str] = None):
+    ticket = tickets_db.get(ticket_id)
+    if ticket and ticket.state == TicketState.ISSUED.value:
+       
+        ticket.state = TicketState.PAID.value
+        ticket.generate_token()
+    
+    
+    return RedirectResponse(url=f"/ticket/{ticket_id}", status_code=303)

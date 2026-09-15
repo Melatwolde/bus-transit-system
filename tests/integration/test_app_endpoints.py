@@ -83,3 +83,120 @@ def test_ticket_not_found_branches():
     assert client.get("/ticket/non-existent-id").status_code == 404
     assert client.post("/ticket/non-existent-id/pay").status_code == 404
     assert client.post("/ticket/non-existent-id/scan").status_code == 404
+
+
+def test_pay_ticket_with_chapa_gateway(monkeypatch):
+    from src.app import tickets_db
+
+    class MockResponse:
+        status_code = 200
+        headers = {"Content-Type": "application/json"}
+        text = '{"status":"success","message":"Hosted Link","data":{"checkout_url":"https://checkout.chapa.co/test-checkout"}}'
+
+        def json(self):
+            import json
+            return json.loads(self.text)
+
+    monkeypatch.setattr("requests.post", lambda url, json=None, headers=None, timeout=None: MockResponse())
+
+    # 1. Book a ticket
+    book_res = client.post(
+        "/book",
+        data={
+            "passenger_name": "Chapa Passenger",
+            "passenger_age": 30,
+            "route_id": "R-101",
+        },
+        follow_redirects=False
+    )
+    assert book_res.status_code == 303
+    ticket_id = book_res.headers["location"].split("/")[-1]
+
+    # 2. Pay using Chapa gateway
+    pay_res = client.post(
+        f"/ticket/{ticket_id}/pay",
+        data={"gateway": "chapa"},
+        follow_redirects=False
+    )
+    assert pay_res.status_code == 303
+    ticket = tickets_db[ticket_id]
+    assert ticket.state == "PAID"
+    assert getattr(ticket, "checkout_url", None) == "https://checkout.chapa.co/test-checkout"
+
+
+def test_pay_ticket_with_chapa_logged_in_user(monkeypatch):
+    from src.app import tickets_db
+
+    captured_payload = {}
+
+    class MockResponse:
+        status_code = 200
+        headers = {"Content-Type": "application/json"}
+        text = '{"status":"success","message":"Hosted Link","data":{"checkout_url":"https://checkout.chapa.co/user-checkout"}}'
+
+        def json(self):
+            import json
+            return json.loads(self.text)
+
+    def mock_post(url, json=None, headers=None, timeout=None):
+        captured_payload["json"] = json
+        return MockResponse()
+
+    monkeypatch.setattr("requests.post", mock_post)
+
+    user_client = TestClient(app)
+    # Register and log in
+    user_client.post(
+        "/register",
+        data={"name": "Almaz Ayana", "email": "almaz@example.com", "password": "securepassword456"},
+        follow_redirects=False
+    )
+
+    # Book ticket
+    book_res = user_client.post(
+        "/book",
+        data={
+            "passenger_name": "Almaz Ayana",
+            "passenger_age": 28,
+            "route_id": "R-101",
+        },
+        follow_redirects=False
+    )
+    ticket_id = book_res.headers["location"].split("/")[-1]
+
+    # Pay with Chapa
+    pay_res = user_client.post(
+        f"/ticket/{ticket_id}/pay",
+        data={"gateway": "chapa"},
+        follow_redirects=False
+    )
+    assert pay_res.status_code == 303
+    assert captured_payload["json"]["email"] == "almaz@example.com"
+    assert captured_payload["json"]["first_name"] == "Almaz"
+    assert captured_payload["json"]["last_name"] == "Ayana"
+    assert tickets_db[ticket_id].state == "PAID"
+
+
+def test_pay_ticket_with_telebirr_gateway():
+    from src.app import tickets_db
+
+    book_res = client.post(
+        "/book",
+        data={
+            "passenger_name": "Telebirr User",
+            "passenger_age": 24,
+            "route_id": "R-202",
+        },
+        follow_redirects=False
+    )
+    assert book_res.status_code == 303
+    ticket_id = book_res.headers["location"].split("/")[-1]
+
+    pay_res = client.post(
+        f"/ticket/{ticket_id}/pay",
+        data={"gateway": "telebirr"},
+        follow_redirects=False
+    )
+    assert pay_res.status_code == 303
+    assert tickets_db[ticket_id].state == "PAID"
+
