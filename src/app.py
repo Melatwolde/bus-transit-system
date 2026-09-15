@@ -36,7 +36,7 @@ def get_current_user(request: Request):
 @app.get("/", response_class=HTMLResponse)
 def get_home(request: Request):
     user = get_current_user(request)
-    return templates.TemplateResponse("index.html", {
+    return templates.TemplateResponse("landing.html", {
         "request": request,
         "routes": routes_db.values(),
         "user": user
@@ -56,7 +56,7 @@ def create_booking(
     try:
         base_fare = calculate_base_fare(passenger_age)
     except ValueError as e:
-        return templates.TemplateResponse("index.html", {
+        return templates.TemplateResponse("landing.html", {
             "request": request,
             "routes": routes_db.values(),
             "user": user,
@@ -65,7 +65,7 @@ def create_booking(
 
     route = routes_db.get(route_id)
     if not route or not route.reserve_seat():
-        return templates.TemplateResponse("index.html", {
+        return templates.TemplateResponse("landing.html", {
             "request": request,
             "routes": routes_db.values(),
             "user": user,
