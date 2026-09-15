@@ -1,54 +1,56 @@
 # Bus Transit System
 
-## Part A: Decision Table Test Plan
+## Part A: Master Test Plan
 
-### Objective
+### Scope and Objectives
 
-This test plan validates the discount calculation logic for the bus fare system. The decision is based on three input conditions:
+This plan covers route discovery at `/routes`, navigation to the timetable, fare-discount calculation, and the booking/ticket flow. It verifies that peak windows, frequent rider status, weekend and public holiday flags, student discounts, stacking, and the 40% cap produce deterministic fares. It also verifies that all decision branches are exercised.
 
-- Holiday status: `is_holiday`
-- Peak-time status: `is_peak`
-- Frequent rider status: `is_frequent_rider`
+### Test Approach
 
-The purpose is to confirm that every valid input combination produces the correct discount value according to the business rules.
+- Unit tests use an exhaustive $2^3$ decision table for `is_peak`, `is_frequent_rider`, and `is_holiday`.
+- Boundary tests cover 07:00, 09:00, 17:00, and 19:00 using inclusive-start/exclusive-end peak windows.
+- Combination tests cover weekend, student, holiday, and cap stacking.
+- Integration tests verify `/routes` returns the timetable and every primary page exposes `data-testid="nav-routes"`.
+- Existing booking, payment, scan, authentication, and invalid-input tests remain regression coverage.
+- The target is at least 80% branch coverage for `src/discount.py`, measured with `pytest --cov=src/discount.py --cov-branch`.
 
-### Business Rules
+### Entry Criteria
 
-The discount logic is applied in the following priority order:
+- Source, templates, and test dependencies are available.
+- The configured Python environment can import FastAPI, Jinja2, pytest, and pytest-cov.
+- The application starts and the test database/state is isolated or reset between tests.
 
-1. If the trip is on a holiday, apply the holiday rule.
-2. Otherwise, if the trip is during peak time, apply the peak-time rule.
-3. Otherwise, apply the off-peak rule.
-4. Within each rule group, the frequent rider status determines the final discount percentage.
+### Exit Criteria
 
-### Expected Discount Rules
+- All unit and integration tests pass.
+- Branch coverage for `src/discount.py` is at least 80%.
+- All eight rows of the three-variable truth table execute successfully.
+- Peak boundary, stacking, cap, route timetable, and navigation checks pass.
+- No open high-severity defects remain.
 
-- Holiday + Frequent rider = 30%
-- Holiday + Non-frequent rider = 20%
-- Peak + Frequent rider = 10%
-- Peak + Non-frequent rider = 0%
-- Off-peak + Frequent rider = 25%
-- Off-peak + Non-frequent rider = 15%
+### Risk-Based Prioritization Matrix
+
+| Area                      | Risk                                                | Priority | Mitigation                                                |
+| ------------------------- | --------------------------------------------------- | -------- | --------------------------------------------------------- |
+| Discount stacking and cap | Incorrect fares or over-discounting                 | High     | Exhaustive table plus cap and additive-combination tests  |
+| Peak boundaries           | Peak surcharge/discount applied at the wrong minute | High     | Boundary tests at all four window edges                   |
+| Booking regression        | Existing customers cannot book or pay               | High     | Run integration and system booking flows                  |
+| Route availability        | Users see stale or missing corridors                | Medium   | Assert all active route rows and frequencies on `/routes` |
+| Navigation                | Users cannot discover the timetable                 | Medium   | Assert `nav-routes` on public and authenticated templates |
+| Invalid input             | Malformed times or fares cause unhandled errors     | Medium   | Add validation tests as time input becomes user-entered   |
 
 ### Decision Table
 
-| Test Case ID | Holiday | Peak | Frequent Rider | Expected Discount | Rule Applied                  |
-| ------------ | ------- | ---- | -------------- | ----------------- | ----------------------------- |
-| DT-01        | Yes     | Yes  | Yes            | 30%               | Holiday + Frequent rider      |
-| DT-02        | Yes     | No   | No             | 20%               | Holiday + Non-frequent rider  |
-| DT-03        | No      | Yes  | Yes            | 10%               | Peak + Frequent rider         |
-| DT-04        | No      | Yes  | No             | 0%                | Peak + Non-frequent rider     |
-| DT-05        | No      | No   | Yes            | 25%               | Off-peak + Frequent rider     |
-| DT-06        | No      | No   | No             | 15%               | Off-peak + Non-frequent rider |
+| Peak | Frequent | Holiday | Expected legacy discount |
+| ---- | -------- | ------- | ------------------------ |
+| No   | No       | No      | 15%                      |
+| No   | No       | Yes     | 20%                      |
+| No   | Yes      | No      | 25%                      |
+| No   | Yes      | Yes     | 30%                      |
+| Yes  | No       | No      | 0%                       |
+| Yes  | No       | Yes     | 20%                      |
+| Yes  | Yes      | No      | 10%                      |
+| Yes  | Yes      | Yes     | 30%                      |
 
-### Rule Interpretation
-
-The decision table confirms that holiday status has the highest priority, followed by peak-time status. The frequent rider flag then determines the exact percentage within the selected category. This ensures the system applies business rules consistently and prevents lower-priority conditions from overriding higher-priority ones.
-
-### Traceability to Automated Test
-
-The same six combinations are implemented and validated in [tests/unit/test_discount.py](tests/unit/test_discount.py).
-
-### Expected Outcome
-
-Each decision-table row should produce exactly one valid discount result, and the full combination set should be covered without missing or duplicate branches.
+The exhaustive rows are implemented in [tests/unit/test_discount.py](tests/unit/test_discount.py). Modern optional flags add 5% for weekend, 5% for holiday, and 10% for students, with a configurable 40% default cap.

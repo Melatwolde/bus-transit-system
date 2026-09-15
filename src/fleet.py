@@ -1,8 +1,9 @@
 class BusRoute:
-    def __init__(self, route_id: str, origin: str, destination: str, capacity: int = 40):
+    def __init__(self, route_id: str, origin: str, destination: str, capacity: int = 40, stops=None):
         self.route_id = route_id
         self.origin = origin
         self.destination = destination
+        self.stops = stops or []
         self.capacity = capacity
         self.booked_seats = 0
 
