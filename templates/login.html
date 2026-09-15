@@ -1,245 +1,303 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Authentication - DispatchIQ</title>
     <style>
-        :root {
-            --bg-base: #121212;
-            --bg-card: #1c1c1c;
-            --bg-input: #18181b;
-            --border-color: #27272a;
-            --text-main: #f4f4f5;
-            --text-muted: #a1a1aa;
-            --accent-emerald: #10b981;
-            --accent-emerald-hover: #059669;
-            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
+      :root {
+        --bg-base: #121212;
+        --bg-card: #1c1c1c;
+        --bg-input: #18181b;
+        --border-color: #27272a;
+        --text-main: #f4f4f5;
+        --text-muted: #a1a1aa;
+        --accent-emerald: #10b981;
+        --accent-emerald-hover: #059669;
+        --font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif;
+      }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
-        body {
-            background-color: var(--bg-base);
-            color: var(--text-main);
-            font-family: var(--font-family);
-            line-height: 1.5;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
+      body {
+        background-color: var(--bg-base);
+        color: var(--text-main);
+        font-family: var(--font-family);
+        line-height: 1.5;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
 
-        header {
-            background-color: var(--bg-card);
-            border-bottom: 1px solid var(--border-color);
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+      header {
+        background-color: var(--bg-card);
+        border-bottom: 1px solid var(--border-color);
+        padding: 1rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
 
-        .brand-logo {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--text-main);
-            letter-spacing: -0.025em;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
+      .brand-logo {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-main);
+        letter-spacing: -0.025em;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
 
-        .brand-logo span {
-            color: var(--accent-emerald);
-        }
+      .brand-logo span {
+        color: var(--accent-emerald);
+      }
 
-        nav {
-            display: flex;
-            gap: 1.5rem;
-            align-items: center;
-        }
+      nav {
+        display: flex;
+        gap: 1.5rem;
+        align-items: center;
+      }
 
-        nav a {
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 500;
-            transition: color 0.15s ease;
-        }
+      nav a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: color 0.15s ease;
+      }
 
-        nav a:hover {
-            color: var(--text-main);
-        }
+      nav a:hover {
+        color: var(--text-main);
+      }
 
-        .container {
-            max-width: 450px;
-            margin: 4rem auto;
-            padding: 0 1.5rem;
-            width: 100%;
-        }
+      .container {
+        max-width: 450px;
+        margin: 4rem auto;
+        padding: 0 1.5rem;
+        width: 100%;
+      }
 
-        .auth-card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 2rem;
-        }
+      .auth-card {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 2rem;
+      }
 
-        .tab-switcher {
-            display: flex;
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 1.5rem;
-        }
+      .tab-switcher {
+        display: flex;
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 1.5rem;
+      }
 
-        .tab-switcher a {
-            flex: 1;
-            text-align: center;
-            padding: 0.75rem;
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 600;
-            border-bottom: 2px solid transparent;
-            transition: all 0.15s ease;
-        }
+      .tab-switcher a {
+        flex: 1;
+        text-align: center;
+        padding: 0.75rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 600;
+        border-bottom: 2px solid transparent;
+        transition: all 0.15s ease;
+      }
 
-        .tab-switcher a.active {
-            color: var(--accent-emerald);
-            border-bottom-color: var(--accent-emerald);
-        }
+      .tab-switcher a.active {
+        color: var(--accent-emerald);
+        border-bottom-color: var(--accent-emerald);
+      }
 
-        .card-header {
-            margin-bottom: 1.5rem;
-        }
+      .card-header {
+        margin-bottom: 1.5rem;
+      }
 
-        .card-header h2 {
-            font-size: 1.35rem;
-            font-weight: 600;
-            letter-spacing: -0.02em;
-        }
+      .card-header h2 {
+        font-size: 1.35rem;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
 
-        .form-group {
-            margin-bottom: 1.25rem;
-        }
+      .form-group {
+        margin-bottom: 1.25rem;
+      }
 
-        label {
-            display: block;
-            font-size: 0.85rem;
-            font-weight: 500;
-            color: var(--text-muted);
-            margin-bottom: 0.5rem;
-        }
+      label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+      }
 
-        input[type="text"],
-        input[type="email"],
-        input[type="password"] {
-            width: 100%;
-            background-color: var(--bg-input);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 0.75rem;
-            color: var(--text-main);
-            font-size: 0.95rem;
-            outline: none;
-            transition: border-color 0.15s ease;
-        }
+      input[type="text"],
+      input[type="email"],
+      input[type="password"] {
+        width: 100%;
+        background-color: var(--bg-input);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 0.75rem;
+        color: var(--text-main);
+        font-size: 0.95rem;
+        outline: none;
+        transition: border-color 0.15s ease;
+      }
 
-        input[type="text"]:focus,
-        input[type="email"]:focus,
-        input[type="password"]:focus {
-            border-color: var(--accent-emerald);
-        }
+      input[type="text"]:focus,
+      input[type="email"]:focus,
+      input[type="password"]:focus {
+        border-color: var(--accent-emerald);
+      }
 
-        .btn-submit {
-            width: 100%;
-            background-color: var(--accent-emerald);
-            color: #000;
-            font-weight: 600;
-            border: none;
-            border-radius: 6px;
-            padding: 0.85rem;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: background-color 0.15s ease;
-            margin-top: 0.5rem;
-        }
+      .btn-submit {
+        width: 100%;
+        background-color: var(--accent-emerald);
+        color: #000;
+        font-weight: 600;
+        border: none;
+        border-radius: 6px;
+        padding: 0.85rem;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+        margin-top: 0.5rem;
+      }
 
-        .btn-submit:hover {
-            background-color: var(--accent-emerald-hover);
-        }
+      .btn-submit:hover {
+        background-color: var(--accent-emerald-hover);
+      }
 
-        .error-msg {
-            background-color: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            color: #f87171;
-            padding: 0.75rem;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            margin-bottom: 1.5rem;
-        }
+      .error-msg {
+        background-color: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #f87171;
+        padding: 0.75rem;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <header>
-        <div class="brand-logo" id="nav-brand" data-testid="nav-brand">
-            <span>Dispatch</span>IQ
-        </div>
-        <nav>
-            <a href="/" id="nav-home" data-testid="nav-home">Home</a>
-            {% if user %}
-                <a href="/dashboard" id="nav-dashboard" data-testid="nav-dashboard">Dashboard</a>
-                <a href="/logout" id="nav-logout" data-testid="nav-logout">Logout</a>
-            {% else %}
-                <a href="/dashboard" id="nav-dashboard" data-testid="nav-dashboard" style="display:none;">Dashboard</a>
-                <a href="/login" id="nav-login" data-testid="nav-login">Login</a>
-            {% endif %}
-        </nav>
+      <div class="brand-logo" id="nav-brand" data-testid="nav-brand">
+        <span>Dispatch</span>IQ
+      </div>
+      <nav>
+        <a href="/" id="nav-home" data-testid="nav-home">Home</a>
+        <a href="/routes" id="nav-routes" data-testid="nav-routes">Routes</a>
+        {% if user %}
+        <a href="/dashboard" id="nav-dashboard" data-testid="nav-dashboard"
+          >Dashboard</a
+        >
+        <a href="/logout" id="nav-logout" data-testid="nav-logout">Logout</a>
+        {% else %}
+        <a
+          href="/dashboard"
+          id="nav-dashboard"
+          data-testid="nav-dashboard"
+          style="display: none"
+          >Dashboard</a
+        >
+        <a href="/login" id="nav-login" data-testid="nav-login">Login</a>
+        {% endif %}
+      </nav>
     </header>
 
     <main class="container">
-        <div class="auth-card">
-            <div class="tab-switcher">
-                <a href="/login" id="link-login" data-testid="link-login" class="{% if mode == 'login' %}active{% endif %}">Log In</a>
-                <a href="/register" id="link-register" data-testid="link-register" class="{% if mode == 'register' %}active{% endif %}">Sign Up</a>
-            </div>
-
-            <div class="card-header">
-                <h2>{% if mode == 'register' %}Create Account{% else %}Welcome Back{% endif %}</h2>
-            </div>
-
-            {% if error_msg %}
-                <div id="auth-error-msg" data-testid="auth-error-msg" class="error-msg">
-                    {{ error_msg }}
-                </div>
-            {% endif %}
-
-            <form action="{% if mode == 'register' %}/register{% else %}/login{% endif %}" method="post" id="auth-form" data-testid="auth-form">
-                {% if mode == 'register' %}
-                    <div class="form-group">
-                        <label for="input-name">Full Name</label>
-                        <input type="text" id="input-name" name="name" data-testid="input-name" placeholder="Enter your full name" required>
-                    </div>
-                {% endif %}
-
-                <div class="form-group">
-                    <label for="input-email">Email Address</label>
-                    <input type="email" id="input-email" name="email" data-testid="input-email" placeholder="name@example.com" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="input-password">Password</label>
-                    <input type="password" id="input-password" name="password" data-testid="input-password" placeholder="••••••••" required>
-                </div>
-
-                <button type="submit" id="btn-auth-submit" data-testid="btn-auth-submit" class="btn-submit">
-                    {% if mode == 'register' %}Register Account{% else %}Log In{% endif %}
-                </button>
-            </form>
+      <div class="auth-card">
+        <div class="tab-switcher">
+          <a
+            href="/login"
+            id="link-login"
+            data-testid="link-login"
+            class="{% if mode == 'login' %}active{% endif %}"
+            >Log In</a
+          >
+          <a
+            href="/register"
+            id="link-register"
+            data-testid="link-register"
+            class="{% if mode == 'register' %}active{% endif %}"
+            >Sign Up</a
+          >
         </div>
+
+        <div class="card-header">
+          <h2>
+            {% if mode == 'register' %}Create Account{% else %}Welcome Back{%
+            endif %}
+          </h2>
+        </div>
+
+        {% if error_msg %}
+        <div id="auth-error-msg" data-testid="auth-error-msg" class="error-msg">
+          {{ error_msg }}
+        </div>
+        {% endif %}
+
+        <form
+          action="{% if mode == 'register' %}/register{% else %}/login{% endif %}"
+          method="post"
+          id="auth-form"
+          data-testid="auth-form"
+        >
+          {% if mode == 'register' %}
+          <div class="form-group">
+            <label for="input-name">Full Name</label>
+            <input
+              type="text"
+              id="input-name"
+              name="name"
+              data-testid="input-name"
+              placeholder="Enter your full name"
+              required
+            />
+          </div>
+          {% endif %}
+
+          <div class="form-group">
+            <label for="input-email">Email Address</label>
+            <input
+              type="email"
+              id="input-email"
+              name="email"
+              data-testid="input-email"
+              placeholder="name@example.com"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="input-password">Password</label>
+            <input
+              type="password"
+              id="input-password"
+              name="password"
+              data-testid="input-password"
+              placeholder="••••••••"
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            id="btn-auth-submit"
+            data-testid="btn-auth-submit"
+            class="btn-submit"
+          >
+            {% if mode == 'register' %}Register Account{% else %}Log In{% endif
+            %}
+          </button>
+        </form>
+      </div>
     </main>
-</body>
+  </body>
 </html>

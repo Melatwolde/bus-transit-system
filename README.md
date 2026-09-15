@@ -1,5 +1,54 @@
 # Bus Transit System
 
+## Part A: Master Test Plan
+
+### Scope and objectives
+
+Test the `/routes` timetable, navigation, Ethiopian local-time peak status, booking and ticket flow, and discount calculation. The discount rules cover peak/off-peak time, frequent rider status, weekends, public holidays, student fares, stacking, and a configurable cap.
+
+### Test approach
+
+- Exhaustively test the three legacy decision flags with $2^3 = 8$ combinations.
+- Exhaustively test the five modern discount flags with $2^5 = 32$ combinations.
+- Test peak boundaries at 07:00, 09:00, 17:00, and 19:00 using start-inclusive/end-exclusive windows.
+- Verify `/routes` renders all nine active routes, departure frequencies, Peak/Off-Peak status, and `data-testid="nav-routes"`.
+- Run unit, integration, and system tests with branch coverage for `src/discount.py`.
+
+### Entry criteria
+
+- `.venv` exists and dependencies in `requirements.txt` are installed.
+- FastAPI, Uvicorn, Jinja2, pytest, pytest-cov, and timezone data import successfully.
+- The application can start on a free local port.
+
+### Exit criteria
+
+- All automated tests pass.
+- `src/discount.py` achieves at least 80% branch coverage.
+- All decision-table combinations and peak boundaries pass.
+- The routes page returns HTTP 200 and renders all requested route pairs.
+- No high-severity defects remain.
+
+### Risk-based prioritization
+
+| Area                      | Risk                                    | Priority | Mitigation                               |
+| ------------------------- | --------------------------------------- | -------- | ---------------------------------------- |
+| Discount stacking and cap | Incorrect fare or over-discounting      | High     | 32-case truth table plus cap validation  |
+| Peak boundaries           | Wrong status around commute windows     | High     | Four boundary tests in Ethiopian time    |
+| Booking regression        | Existing users cannot book or pay       | High     | Integration and system lifecycle tests   |
+| Route data                | Missing or incorrect corridor           | High     | Assert all nine route pairs on `/routes` |
+| Navigation                | Users cannot discover timetable         | Medium   | Check `nav-routes` across page headers   |
+| Timezone data             | Page fails on Windows without IANA data | Medium   | Declare and install `tzdata`             |
+
+### Commands
+
+```powershell
+& .\.venv\Scripts\python.exe -m pytest tests/unit/test_discount.py --cov=src.discount --cov-branch --cov-report=term-missing
+& .\.venv\Scripts\python.exe -m pytest tests/unit tests/integration -v
+& .\.venv\Scripts\python.exe -m pytest tests -v
+```
+
+# Bus Transit System
+
 ## Part A: Decision Table Test Plan
 
 ### Objective

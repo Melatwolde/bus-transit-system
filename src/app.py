@@ -1,3 +1,6 @@
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
 from fastapi import FastAPI, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -7,7 +10,7 @@ import time
 import uuid
 
 from src.fare import calculate_base_fare
-from src.discount import calculate_discount_rate
+from src.discount import calculate_discount_rate, is_peak_hour
 from src.fleet import BusRoute
 from src.ticket import Ticket, PaymentGatewayInterface, ChapaTestPaymentGateway, TicketState
 
@@ -21,8 +24,15 @@ users_db = {}
 
 # Initial data store
 routes_db = {
-    "R-101": BusRoute("R-101", "Megenagna", "Torhailoch", capacity=5),
-    "R-202": BusRoute("R-202", "Bole", "Piazza", capacity=40)
+    "R-101": BusRoute("R-101", "Megenagna", "Kara", capacity=5),
+    "R-202": BusRoute("R-202", "Ayertena", "Menelik II Square"),
+    "R-303": BusRoute("R-303", "Merkato", "Saris", capacity=30),
+    "R-404": BusRoute("R-404", "Megenagna", "Legehar"),
+    "R-505": BusRoute("R-505", "Tor Hailoch", "BoleSarbet"),
+    "R-606": BusRoute("R-606", "Kotebe", "Merkato"),
+    "R-707": BusRoute("R-707", "Megenagna", "4 Kilo"),
+    "R-808": BusRoute("R-808", "Tor Hailoch", "Ayertena"),
+    "45": BusRoute("45", "Megenagna", "Bole Airport")
 }
 tickets_db = {}
 
@@ -43,6 +53,29 @@ def get_home(request: Request):
         "request": request,
         "routes": routes_db.values(),
         "user": user
+    })
+
+@app.get("/routes", response_class=HTMLResponse)
+def get_routes(request: Request):
+    user = get_current_user(request)
+    addis_ababa_now = datetime.now(ZoneInfo("Africa/Addis_Ababa"))
+    current_status = "Peak service" if is_peak_hour(addis_ababa_now.time()) else "Off-peak service"
+    frequencies = ["Every 10 minutes", "Every 15 minutes", "Every 20 minutes"]
+    schedules = [
+        {
+            "route": route,
+            "frequency": frequencies[index % len(frequencies)],
+            "peak": "07:00-09:00 AM LT / 05:00-07:00 PM LT",
+            "status": current_status,
+        }
+        for index, route in enumerate(routes_db.values())
+    ]
+    return templates.TemplateResponse("routes.html", {
+        "request": request,
+        "schedules": schedules,
+        "user": user,
+        "local_time": addis_ababa_now.strftime("%H:%M"),
+        "timezone": "Africa/Addis_Ababa",
     })
 
 @app.post("/book", response_class=HTMLResponse)
