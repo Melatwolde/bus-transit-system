@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Addis Transit - Quick Digital Bus Passes</title>
+    <style>
+        :root {
+            --bg-base: #0f172a;
+            --bg-card: #1e293b;
+            --bg-input: #0f172a;
+            --border-color: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-emerald: #10b981;
+            --accent-emerald-hover: #059669;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: var(--font-family);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand-logo {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: var(--text-main);
+            letter-spacing: -0.025em;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .brand-logo span {
+            color: var(--accent-emerald);
+        }
+
+        nav {
+            display: flex;
+            gap: 1.25rem;
+            align-items: center;
+        }
+
+        nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: color 0.15s ease;
+        }
+
+        nav a:hover {
+            color: var(--text-main);
+        }
+
+        .nav-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.15s ease;
+        }
+
+        .nav-btn-secondary {
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            background: var(--bg-card);
+        }
+
+        .nav-btn-secondary:hover {
+            border-color: var(--accent-emerald);
+            color: var(--accent-emerald);
+        }
+
+        .nav-btn-primary {
+            background: var(--accent-emerald);
+            color: #0f172a;
+        }
+
+        .nav-btn-primary:hover {
+            background: var(--accent-emerald-hover);
+        }
+
+        .container {
+            max-width: 1050px;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem;
+            width: 100%;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            text-align: center;
+            padding: 3.5rem 1.5rem;
+            background: radial-gradient(circle at top, rgba(16, 185, 129, 0.15), transparent 70%);
+            border-radius: 20px;
+            margin-bottom: 3rem;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .hero-badge {
+            display: inline-block;
+            padding: 0.35rem 1rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--accent-emerald);
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .hero-title {
+            font-size: 2.75rem;
+            font-weight: 800;
+            line-height: 1.2;
+            letter-spacing: -0.03em;
+            margin-bottom: 1.25rem;
+            background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-subtitle {
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            max-width: 650px;
+            margin: 0 auto 2.25rem auto;
+        }
+
+        .hero-cta-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-cta {
+            padding: 0.85rem 1.75rem;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: 8px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-cta:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-cta-primary {
+            background-color: var(--accent-emerald);
+            color: #0f172a;
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+        }
+
+        .btn-cta-primary:hover {
+            background-color: var(--accent-emerald-hover);
+        }
+
+        .btn-cta-secondary {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        .btn-cta-secondary:hover {
+            border-color: var(--text-muted);
+            background-color: #334155;
+        }
+
+        /* Section Headings */
+        .section-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .section-subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            text-align: center;
+            margin-bottom: 2.25rem;
+        }
+
+        /* Feature Cards */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3.5rem;
+        }
+
+        .feature-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: border-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .feature-card:hover {
+            border-color: var(--accent-emerald);
+            transform: translateY(-3px);
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            display: inline-block;
+        }
+
+        .feature-card h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-card p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        /* Pricing Tiers */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3.5rem;
+        }
+
+        .pricing-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1.75rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            transition: border-color 0.2s ease;
+        }
+
+        .pricing-card.featured {
+            border-color: var(--accent-emerald);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
+        }
+
+        .pricing-card .tier-tag {
+            position: absolute;
+            top: -12px;
+            right: 16px;
+            background: var(--accent-emerald);
+            color: #0f172a;
+            font-size: 0.75rem;
+            font-weight: 800;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+
+        .pricing-header h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .pricing-header .age-span {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .pricing-price {
+            font-size: 2rem;
+            font-weight: 800;
+            margin: 1.25rem 0;
+            color: var(--accent-emerald);
+        }
+
+        .pricing-price span {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .pricing-features {
+            list-style: none;
+            margin-bottom: 1.5rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .pricing-features li {
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .pricing-features li::before {
+            content: "✓";
+            color: var(--accent-emerald);
+            font-weight: bold;
+        }
+
+        .btn-pricing-cta {
+            width: 100%;
+            padding: 0.65rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            transition: all 0.15s ease;
+        }
+
+        .btn-pricing-cta:hover {
+            background: var(--accent-emerald);
+            color: #0f172a;
+            border-color: var(--accent-emerald);
+        }
+
+        /* Route Multipliers Banner */
+        .route-info-banner {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem 1.75rem;
+            margin-bottom: 3.5rem;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .route-item {
+            text-align: center;
+        }
+
+        .route-item strong {
+            display: block;
+            font-size: 1rem;
+            color: var(--text-main);
+        }
+
+        .route-item span {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Quick Actions Grid */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .action-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1.25rem;
+        }
+
+        .action-card h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.35rem;
+        }
+
+        .action-card p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Booking Section Form */
+        .booking-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 2.25rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-header {
+            margin-bottom: 1.75rem;
+        }
+
+        .card-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .card-header p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: var(--text-main);
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.15s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            border-color: var(--accent-emerald);
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin: 1.5rem 0;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            padding: 1.25rem;
+            border-radius: 8px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            cursor: pointer;
+            color: var(--text-main);
+            font-size: 0.9rem;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            accent-color: var(--accent-emerald);
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background-color: var(--accent-emerald);
+            color: #0f172a;
+            font-weight: 700;
+            border: none;
+            border-radius: 8px;
+            padding: 0.95rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.15s ease, transform 0.1s ease;
+        }
+
+        .btn-submit:hover {
+            background-color: var(--accent-emerald-hover);
+        }
+
+        .error-msg {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #f87171;
+            padding: 0.85rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="/" class="brand-logo" id="nav-brand" data-testid="nav-brand">
+            <span>Addis</span>Transit
+        </a>
+        <nav>
+            <a href="/" id="nav-home" data-testid="nav-home">Home</a>
+            {% if user %}
+                <a href="/dashboard" id="nav-dashboard" data-testid="nav-dashboard">Dashboard</a>
+                <a href="/logout" id="nav-logout" data-testid="nav-logout" class="nav-btn nav-btn-secondary">Logout</a>
+            {% else %}
+                <a href="/dashboard" id="nav-dashboard" data-testid="nav-dashboard" style="display:none;">Dashboard</a>
+                <a href="/login" id="nav-login" data-testid="nav-login" class="nav-btn nav-btn-secondary">Login</a>
+                <a href="/register" id="nav-register" data-testid="nav-register" class="nav-btn nav-btn-primary">Register</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <main class="container">
+        <!-- Hero Section -->
+        <section class="hero-section" id="hero" data-testid="hero-section">
+            <span class="hero-badge">Smart City Transit</span>
+            <h1 class="hero-title" data-testid="hero-title">Addis Transit - Quick Digital Bus Passes</h1>
+            <p class="hero-subtitle">
+                Instant contactless ticketing across Addis Ababa. Book bus passes in seconds as a guest or with your registered rider account.
+            </p>
+            <div class="hero-cta-group">
+                <a href="#booking-section" class="btn-cta btn-cta-primary" id="cta-book-guest" data-testid="btn-book-guest">
+                    Book as Guest &rarr;
+                </a>
+                <a href="/login" class="btn-cta btn-cta-secondary" id="cta-login-register" data-testid="btn-login-register">
+                    Login / Register
+                </a>
+            </div>
+        </section>
+
+        <!-- Feature Cards -->
+        <section id="features" data-testid="features-section">
+            <h2 class="section-title">Why Choose Addis Transit?</h2>
+            <p class="section-subtitle">Modern transit features designed for seamless urban mobility</p>
+            <div class="features-grid">
+                <div class="feature-card" id="card-feature-eticketing" data-testid="card-feature-eticketing">
+                    <div class="feature-icon">🎫</div>
+                    <h3>Instant E-Tickets</h3>
+                    <p>Generate digital tickets with dynamic SHA-256 verification hash instantly.</p>
+                </div>
+                <div class="feature-card" id="card-feature-qr" data-testid="card-feature-qr">
+                    <div class="feature-icon">📱</div>
+                    <h3>QR Conductor Scan</h3>
+                    <p>Fast boarding validation via lightweight 16-character conductor QR codes.</p>
+                </div>
+                <div class="feature-card" id="card-feature-concessions" data-testid="card-feature-concessions">
+                    <div class="feature-icon">👶</div>
+                    <h3>Concession Fares</h3>
+                    <p>Automated age discounts for infants, students, youth, and senior citizens.</p>
+                </div>
+                <div class="feature-card" id="card-feature-routes" data-testid="card-feature-routes">
+                    <div class="feature-icon">🚌</div>
+                    <h3>Express Subcity Routes</h3>
+                    <p>Comprehensive local & inter-subcity coverage with real-time seat reservation.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pricing Tiers Display -->
+        <section id="pricing" data-testid="pricing-section">
+            <h2 class="section-title">Transparent Fare Pricing</h2>
+            <p class="section-subtitle">Automated age categories and route multipliers</p>
+            <div class="pricing-grid">
+                <div class="pricing-card" id="card-tier-child" data-testid="card-tier-child">
+                    <div class="pricing-header">
+                        <h3>Infant / Child</h3>
+                        <span class="age-span">Ages 0 – 5</span>
+                    </div>
+                    <div class="pricing-price">0.0 <span style="font-size:0.9rem">ETB</span></div>
+                    <ul class="pricing-features">
+                        <li>100% Free Travel</li>
+                        <li>All Local & Express Routes</li>
+                        <li>No Registration Required</li>
+                    </ul>
+                    <a href="#booking-section" class="btn-pricing-cta" id="btn-pricing-child" data-testid="btn-pricing-child">Book Free Pass</a>
+                </div>
+
+                <div class="pricing-card" id="card-tier-student" data-testid="card-tier-student">
+                    <div class="pricing-header">
+                        <h3>Student / Youth</h3>
+                        <span class="age-span">Ages 6 – 17</span>
+                    </div>
+                    <div class="pricing-price">10.0 <span>ETB</span></div>
+                    <ul class="pricing-features">
+                        <li>Concession Discount</li>
+                        <li>Peak & Off-Peak Travel</li>
+                        <li>Frequent Rider Compatible</li>
+                    </ul>
+                    <a href="#booking-section" class="btn-pricing-cta" id="btn-pricing-student" data-testid="btn-pricing-student">Book Student Pass</a>
+                </div>
+
+                <div class="pricing-card featured" id="card-tier-adult" data-testid="card-tier-adult">
+                    <span class="tier-tag">Standard</span>
+                    <div class="pricing-header">
+                        <h3>Adult Standard</h3>
+                        <span class="age-span">Ages 18 – 64</span>
+                    </div>
+                    <div class="pricing-price">25.0 <span>ETB</span></div>
+                    <ul class="pricing-features">
+                        <li>Full Fleet Access</li>
+                        <li>Holiday & Peak Discounts</li>
+                        <li>Instant QR Pass</li>
+                    </ul>
+                    <a href="#booking-section" class="btn-pricing-cta" id="btn-pricing-adult" data-testid="btn-pricing-adult">Book Standard Pass</a>
+                </div>
+
+                <div class="pricing-card" id="card-tier-senior" data-testid="card-tier-senior">
+                    <div class="pricing-header">
+                        <h3>Senior Citizen</h3>
+                        <span class="age-span">Ages 65 – 120</span>
+                    </div>
+                    <div class="pricing-price">15.0 <span>ETB</span></div>
+                    <ul class="pricing-features">
+                        <li>Senior Fare Discount</li>
+                        <li>Priority Boarding</li>
+                        <li>No Expiration Surcharge</li>
+                    </ul>
+                    <a href="#booking-section" class="btn-pricing-cta" id="btn-pricing-senior" data-testid="btn-pricing-senior">Book Senior Pass</a>
+                </div>
+            </div>
+
+            <!-- Route Multipliers Banner -->
+            <div class="route-info-banner" id="banner-zone-multipliers" data-testid="banner-zone-multipliers">
+                <div class="route-item">
+                    <strong>Local Subcity Routes</strong>
+                    <span>Standard Fare Multiplier: 1.0x</span>
+                </div>
+                <div class="route-item">
+                    <strong>Inter-Subcity Express</strong>
+                    <span>Express Multiplier: 1.5x</span>
+                </div>
+                <div class="route-item">
+                    <strong>Holiday & Off-Peak Specials</strong>
+                    <span>Up to 30% Additional Discount</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quick Actions & Guest Booking -->
+        <div class="quick-actions">
+            <div class="action-card" id="card-guest-quickbook" data-testid="card-guest-quickbook">
+                <h3>Guest Quick-Book</h3>
+                <p>Purchase bus passes directly without creating an account.</p>
+                <a href="#booking-section" style="color:var(--accent-emerald); font-weight:600; font-size:0.85rem;" data-testid="btn-quick-book-link">Start Booking &rarr;</a>
+            </div>
+            <div class="action-card" id="card-login-saved-passes" data-testid="card-login-saved-passes">
+                <h3>Log In for Saved Passes</h3>
+                <p>Access your ticket history, saved passes, and account dashboard.</p>
+                <a href="/login" style="color:var(--accent-emerald); font-weight:600; font-size:0.85rem;" data-testid="btn-login-saved-link">Sign In &rarr;</a>
+            </div>
+        </div>
+
+        <!-- Integrated Booking Form Section -->
+        <section id="booking-section" class="booking-card">
+            <div class="card-header">
+                <h2>Digital Bus Pass Booking</h2>
+                <p>Select passenger details, age category, and route options below</p>
+            </div>
+
+            {% if error_msg %}
+                <div id="error_msg" data-testid="error-msg" class="error-msg">
+                    {{ error_msg }}
+                </div>
+            {% endif %}
+
+            <form action="/book" method="post" id="booking-form" data-testid="booking-form">
+                <div class="form-group">
+                    <label for="passenger_name">Passenger Name</label>
+                    <input type="text" id="passenger_name" name="passenger_name" data-testid="input-passenger-name" placeholder="Enter passenger full name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="passenger_age">Passenger Age (0 - 120)</label>
+                    <input type="number" id="passenger_age" name="passenger_age" data-testid="input-passenger-age" placeholder="Enter age" min="0" max="120" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="route_id">Select Route</label>
+                    <select id="route_id" name="route_id" data-testid="input-route-id" required>
+                        {% for r in routes %}
+                            <option value="{{ r.route_id }}">{{ r.route_id }}: {{ r.origin }} to {{ r.destination }} (Capacity: {{ r.capacity - r.booked_seats }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="checkbox-group">
+                    <label class="checkbox-label" for="is_peak">
+                        <input type="checkbox" id="is_peak" name="is_peak" value="true" data-testid="check-peak">
+                        Peak Travel Hours
+                    </label>
+                    <label class="checkbox-label" for="is_frequent">
+                        <input type="checkbox" id="is_frequent" name="is_frequent" value="true" data-testid="check-frequent">
+                        Frequent Rider Pass
+                    </label>
+                    <label class="checkbox-label" for="is_holiday">
+                        <input type="checkbox" id="is_holiday" name="is_holiday" value="true" data-testid="check-holiday">
+                        Public Holiday
+                    </label>
+                </div>
+
+                <button type="submit" id="book_btn" data-testid="btn-book-ticket" class="btn-submit">
+                    Calculate Fare & Book Ticket
+                </button>
+            </form>
+        </section>
+    </main>
+</body>
+</html>
