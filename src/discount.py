@@ -1,14 +1,17 @@
-from datetime import time
+from datetime import datetime, time
+from zoneinfo import ZoneInfo
 
 
 DISCOUNT_CAP = 40
 
 
-def is_peak_hour(time_of_day: str | time) -> bool:
-    """Return whether a service time falls in either weekday peak window."""
-    if isinstance(time_of_day, str):
+def is_peak_hour(time_of_day: str | time | datetime) -> bool:
+    """Return whether a service time falls in an Addis Ababa peak window."""
+    if isinstance(time_of_day, datetime):
+        time_of_day = time_of_day.astimezone(ZoneInfo("Africa/Addis_Ababa")).time()
+    elif isinstance(time_of_day, str):
         time_of_day = time.fromisoformat(time_of_day)
-    return (time(7, 0) <= time_of_day < time(9, 0)) or (
+    return (time(13, 0) <= time_of_day < time(15, 0)) or (
         time(17, 0) <= time_of_day < time(19, 0)
     )
 

@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 from itertools import product
 
 import pytest
@@ -24,12 +24,30 @@ def test_decision_table_covers_all_eight_rule_combinations():
 
 
 def test_peak_hours_use_inclusive_start_and_exclusive_end_boundaries():
-    assert is_peak_hour("07:00")
-    assert is_peak_hour("08:59")
-    assert not is_peak_hour("09:00")
+    assert is_peak_hour("13:00")
+    assert is_peak_hour("14:59")
+    assert not is_peak_hour("15:00")
     assert is_peak_hour("17:00")
     assert is_peak_hour("18:59")
     assert not is_peak_hour("19:00")
+
+
+def test_peak_window_boundaries_for_afternoon_and_evening_periods():
+    assert is_peak_hour("12:59") is False
+    assert is_peak_hour("13:00") is True
+    assert is_peak_hour("14:59") is True
+    assert is_peak_hour("15:00") is False
+    assert is_peak_hour("16:59") is False
+    assert is_peak_hour("17:00") is True
+    assert is_peak_hour("18:59") is True
+    assert is_peak_hour("19:00") is False
+
+
+def test_frequent_rider_peak_and_off_peak_calc_with_time_of_day():
+    assert calculate_discount_rate(time_of_day="13:30", is_frequent_rider=True) == 10
+    assert calculate_discount_rate(time_of_day="12:30", is_frequent_rider=True) == 25
+    assert calculate_discount_rate(time_of_day="18:30", is_frequent_rider=True) == 10
+    assert calculate_discount_rate(time_of_day="20:00", is_frequent_rider=True) == 25
 
 
 def test_combinatorial_discounts_stack_and_obey_cap():
@@ -48,11 +66,6 @@ def test_combinatorial_discounts_stack_and_obey_cap():
         is_student=True,
         discount_cap=35,
     ) == 35
-
-
-def test_time_of_day_can_derive_peak_status():
-    assert calculate_discount_rate(time_of_day="07:30", is_frequent_rider=True) == 10
-    assert calculate_discount_rate(time_of_day="12:30", is_frequent_rider=True) == 25
 
 
 @pytest.mark.parametrize("is_peak, is_frequent, is_holiday, is_weekend, is_student", product((False, True), repeat=5))
@@ -80,5 +93,3 @@ def test_discount_cap_rejects_invalid_values():
         calculate_discount_rate(is_peak=False, discount_cap=101)
     with pytest.raises(TypeError):
         calculate_discount_rate(is_peak=False, discount_cap=40.0)
-=======
->>>>>>> main
