@@ -42,11 +42,5 @@ pipeline {
         always {
             cleanWs()
         }
-        success {
-            echo "Jenkins Build Status: GREEN - All suites passed and coverage gate met!"
-        }
-        failure {
-            echo "Jenkins Build Status: RED - Defect detected or coverage dropped below 80%!"
-        }
     }
 }
