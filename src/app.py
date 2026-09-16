@@ -25,14 +25,14 @@ users_db = {}
 # Initial data store
 routes_db = {
     "R-101": BusRoute("R-101", "Megenagna", "Kara", capacity=5),
-    "R-202": BusRoute("R-202", "Ayertena", "Menelik II Square"),
+    "R-202": BusRoute("R-202", "Ayertena", "Menelik II", capacity=20),
     "R-303": BusRoute("R-303", "Merkato", "Saris", capacity=30),
-    "R-404": BusRoute("R-404", "Megenagna", "Legehar"),
-    "R-505": BusRoute("R-505", "Tor Hailoch", "BoleSarbet"),
-    "R-606": BusRoute("R-606", "Kotebe", "Merkato"),
-    "R-707": BusRoute("R-707", "Megenagna", "4 Kilo"),
-    "R-808": BusRoute("R-808", "Tor Hailoch", "Ayertena"),
-    "45": BusRoute("45", "Megenagna", "Bole Airport", capacity=40)
+    "R-404": BusRoute("R-404", "Megenagna", "Legehar", capacity=18),
+    "R-505": BusRoute("R-505", "Tor Hailoch", "Bole Sarbet", capacity=22),
+    "R-606": BusRoute("R-606", "Kotebe", "Merkato", capacity=25),
+    "R-707": BusRoute("R-707", "Megenagna", "4 Kilo", capacity=15),
+    "R-808": BusRoute("R-808", "Tor Hailoch", "Ayertena", capacity=18),
+    "R-909": BusRoute("R-909", "Megenagna", "Bole Airport", capacity=40),
 }
 tickets_db = {}
 
@@ -60,20 +60,68 @@ def get_routes(request: Request):
     user = get_current_user(request)
     addis_ababa_now = datetime.now(ZoneInfo("Africa/Addis_Ababa"))
     current_status = "Peak service" if is_peak_hour(addis_ababa_now.time()) else "Off-peak service"
-    frequencies = ["Every 10 minutes", "Every 15 minutes", "Every 20 minutes"]
-    schedules = [
+    frequencies = ["Every 10 minutes", "Every 15 minutes", "Every 20 minutes", "Every 12 minutes"]
+    route_rows = [
         {
-            "route": route,
-            "frequency": frequencies[index % len(frequencies)],
-            "peak": "07:00-09:00 AM LT / 05:00-07:00 PM LT",
+            "route": "Megenagna to Kara",
+            "frequency": frequencies[0],
+            "window": "01:00 PM - 03:00 PM / 05:00 PM - 07:00 PM LT",
             "status": current_status,
-        }
-        for index, route in enumerate(routes_db.values())
+        },
+        {
+            "route": "Ayertena to Menelik II",
+            "frequency": frequencies[1],
+            "window": "01:00 PM - 03:00 PM / 05:00 PM - 07:00 PM LT",
+            "status": current_status,
+        },
+        {
+            "route": "Merkato to Saris",
+            "frequency": frequencies[2],
+            "window": "01:00 PM - 03:00 PM / 05:00 PM - 07:00 PM LT",
+            "status": current_status,
+        },
+        {
+            "route": "Megenagna to Legehar",
+            "frequency": frequencies[3],
+            "window": "01:00 PM - 03:00 PM / 05:00 PM - 07:00 PM LT",
+            "status": current_status,
+        },
+        {
+            "route": "Tor Hailoch to Bole Sarbet",
+            "frequency": frequencies[0],
+            "window": "01:00 PM - 03:00 PM / 05:00 PM - 07:00 PM LT",
+            "status": current_status,
+        },
+        {
+            "route": "Kotebe to Merkato",
+            "frequency": frequencies[1],
+            "window": "01:00 PM - 03:00 PM / 05:00 PM - 07:00 PM LT",
+            "status": current_status,
+        },
+        {
+            "route": "Megenagna to 4 Kilo",
+            "frequency": frequencies[2],
+            "window": "01:00 PM - 03:00 PM / 05:00 PM - 07:00 PM LT",
+            "status": current_status,
+        },
+        {
+            "route": "Tor Hailoch to Ayertena",
+            "frequency": frequencies[3],
+            "window": "01:00 PM - 03:00 PM / 05:00 PM - 07:00 PM LT",
+            "status": current_status,
+        },
+        {
+            "route": "Megenagna to Bole Airport",
+            "frequency": frequencies[0],
+            "window": "01:00 PM - 03:00 PM / 05:00 PM - 07:00 PM LT",
+            "status": current_status,
+        },
     ]
     return templates.TemplateResponse("routes.html", {
         "request": request,
-        "schedules": schedules,
+        "routes": route_rows,
         "user": user,
+        "current_status": current_status,
         "local_time": addis_ababa_now.strftime("%H:%M"),
         "timezone": "Africa/Addis_Ababa",
     })
