@@ -1,9 +1,9 @@
 import pytest
 from src.fare import calculate_base_fare
 
-# =====================================================================
+
 # 1. Equivalence Partitioning (EP) Tests
-# =====================================================================
+
 
 def test_fare_ep_valid_partitions():
     """Valid EP Partitions: Infant/Child (0-5), Student (6-17), Adult (18-64), Senior (65-120)."""
@@ -111,9 +111,9 @@ def test_fare_invalid_multiplier_parameters():
         calculate_base_fare(25, route_type=123)
 
 
-# =====================================================================
+
 # 2. Boundary Value Analysis (BVA) Tests
-# =====================================================================
+
 
 def test_fare_bva_2_value_boundaries():
     """Formal 2-Value BVA Test Cases around boundary points (0, 5, 6, 17, 18, 64, 65, 120)."""
