@@ -8,15 +8,21 @@ from starlette.middleware.sessions import SessionMiddleware
 from typing import Optional
 import time
 import uuid
+import hmac
+import hashlib
 
 from src.fare import calculate_base_fare
 from src.discount import calculate_discount_rate, is_peak_hour
 from src.fleet import BusRoute
+from src import fleet_db
 from src.ticket import Ticket, PaymentGatewayInterface, ChapaTestPaymentGateway, TicketState
 from src import database
 
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key="dispatch-iq-auth-secret-key-2026")
+
+
+database.init_database()
 
 templates = Jinja2Templates(directory="templates")
 
@@ -33,6 +39,9 @@ routes_db = {
     "R-909": BusRoute("R-909", "Megenagna", "Bole Airport", capacity=40),
 }
 
+# Ensure fleet DB is populated with initial in-memory routes
+fleet_db.ensure_routes_populated(routes_db)
+
 class DefaultPaymentGateway(PaymentGatewayInterface):
     def charge(self, amount: float) -> bool:
         return True
@@ -42,6 +51,14 @@ def get_current_user(request: Request):
     if email:
         return database.get_user_by_email(email)
     return None
+
+
+def _create_auth_token(user_id: int, is_student: bool = False, is_frequent: bool = False) -> str:
+    """Create a simple HMAC-signed session token containing minimal user flags."""
+    secret = "dispatch-iq-auth-secret-key-2026"
+    payload = f"{user_id}:{int(bool(is_student))}:{int(bool(is_frequent))}"
+    signature = hmac.new(secret.encode("utf-8"), payload.encode("utf-8"), hashlib.sha256).hexdigest()
+    return f"{payload}:{signature}"
 
 @app.get("/", response_class=HTMLResponse)
 def get_home(request: Request):
@@ -57,62 +74,19 @@ def get_routes(request: Request):
     addis_ababa_now = datetime.now(ZoneInfo("Africa/Addis_Ababa"))
     current_status = "Peak service" if is_peak_hour(addis_ababa_now.time()) else "Off-peak service"
     frequencies = ["Every 10 minutes", "Every 15 minutes", "Every 20 minutes", "Every 12 minutes"]
-    route_rows = [
-        {
-            "route": "Megenagna to Kara",
-            "frequency": frequencies[0],
+    # Build rows from the authoritative routes_db so each row has a route_id
+    route_rows = []
+    i = 0
+    for r_id, r in routes_db.items():
+        route_rows.append({
+            "route_id": r_id,
+            "route": f"{r.origin} to {r.destination}",
+            "frequency": frequencies[i % len(frequencies)],
             "window": "01:00 PM - 03:00 PM / 05:00 PM - 07:00 PM LT",
             "status": current_status,
-        },
-        {
-            "route": "Ayertena to Menelik II",
-            "frequency": frequencies[1],
-            "window": "01:00 PM - 03:00 PM / 05:00 PM - 07:00 PM LT",
-            "status": current_status,
-        },
-        {
-            "route": "Merkato to Saris",
-            "frequency": frequencies[2],
-            "window": "01:00 PM - 03:00 PM / 05:00 PM - 07:00 PM LT",
-            "status": current_status,
-        },
-        {
-            "route": "Megenagna to Legehar",
-            "frequency": frequencies[3],
-            "window": "01:00 PM - 03:00 PM / 05:00 PM - 07:00 PM LT",
-            "status": current_status,
-        },
-        {
-            "route": "Tor Hailoch to Bole Sarbet",
-            "frequency": frequencies[0],
-            "window": "01:00 PM - 03:00 PM / 05:00 PM - 07:00 PM LT",
-            "status": current_status,
-        },
-        {
-            "route": "Kotebe to Merkato",
-            "frequency": frequencies[1],
-            "window": "01:00 PM - 03:00 PM / 05:00 PM - 07:00 PM LT",
-            "status": current_status,
-        },
-        {
-            "route": "Megenagna to 4 Kilo",
-            "frequency": frequencies[2],
-            "window": "01:00 PM - 03:00 PM / 05:00 PM - 07:00 PM LT",
-            "status": current_status,
-        },
-        {
-            "route": "Tor Hailoch to Ayertena",
-            "frequency": frequencies[3],
-            "window": "01:00 PM - 03:00 PM / 05:00 PM - 07:00 PM LT",
-            "status": current_status,
-        },
-        {
-            "route": "Megenagna to Bole Airport",
-            "frequency": frequencies[0],
-            "window": "01:00 PM - 03:00 PM / 05:00 PM - 07:00 PM LT",
-            "status": current_status,
-        },
-    ]
+        })
+        i += 1
+
     return templates.TemplateResponse("routes.html", {
         "request": request,
         "routes": route_rows,
@@ -143,7 +117,9 @@ def create_booking(
         })
 
     route = routes_db.get(route_id)
-    if not route or not route.reserve_seat():
+    # Prefer DB-backed reservation to ensure atomicity across processes
+    reserved = fleet_db.reserve_seat(route_id)
+    if not route or not reserved:
         return templates.TemplateResponse(request=request, name="landing.html", context={
             "routes": routes_db.values(),
             "user": user,
@@ -164,6 +140,32 @@ def create_booking(
         request.session["guest_tickets"] = guest_tickets
 
     return RedirectResponse(url=f"/ticket/{ticket.ticket_id}", status_code=303)
+
+
+@app.post("/ticket/{ticket_id}/cancel")
+def cancel_ticket(request: Request, ticket_id: str):
+    ticket = database.get_ticket(ticket_id)
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    # Attempt to cancel ticket; if successful, release a seat on the route
+    success = ticket.cancel()
+    if success:
+        # release seat in fleet DB (best-effort)
+        try:
+            fleet_db.release_seat(ticket.route_id)
+        except Exception:
+            pass
+        database.save_ticket(ticket)
+        return RedirectResponse(url=f"/ticket/{ticket_id}", status_code=303)
+
+    # If cancel failed, show ticket with error
+    database.save_ticket(ticket)
+    return templates.TemplateResponse(request=request, name="ticket.html", context={
+        "ticket": ticket,
+        "user": get_current_user(request),
+        "error_msg": "Unable to cancel ticket"
+    })
 
 @app.get("/ticket/{ticket_id}", response_class=HTMLResponse)
 def get_ticket(request: Request, ticket_id: str):
@@ -276,9 +278,30 @@ def post_register(
             "error_msg": "Email is already registered",
             "user": None
         })
-    
+    # Initialize session state immediately after registration
     request.session["user_email"] = email
+    request.session["user_id"] = account.get("id")
+    # Default flags for new users; these can be changed later by profile actions
+    request.session["is_student"] = False
+    request.session["is_frequent_rider"] = False
+    # Create a signed session token and persist it in the session cookie
+    request.session["auth_token"] = _create_auth_token(request.session["user_id"], False, False)
     return RedirectResponse(url="/dashboard", status_code=303)
+
+
+@app.get("/routes/{route_id}/book")
+def route_book(request: Request, route_id: str):
+    """Session-aware booking entry point.
+
+    Redirects authenticated users to the authenticated booking flow and
+    falls back to the guest flow for anonymous users.
+    """
+    user = get_current_user(request)
+    # preserve route context for downstream flows
+    if user:
+        return RedirectResponse(url=f"/bookings/create?route_id={route_id}", status_code=303)
+    else:
+        return RedirectResponse(url=f"/bookings/guest?route_id={route_id}", status_code=303)
 
 @app.api_route("/logout", methods=["GET", "POST"])
 def logout(request: Request):
@@ -295,6 +318,17 @@ def get_dashboard(request: Request):
     return templates.TemplateResponse(request=request, name="dashboard.html", context={
         "user": user,
         "tickets": user_tickets
+    })
+
+
+@app.get("/conductor", response_class=HTMLResponse)
+def get_conductor(request: Request):
+    user = get_current_user(request)
+    # minimal access control could be added here
+    routes = fleet_db.get_all_routes()
+    return templates.TemplateResponse(request=request, name="conductor.html", context={
+        "routes": routes,
+        "user": user
     })
 @app.get("/payment/return/{ticket_id}")
 def payment_return(request: Request, ticket_id: str, tx_ref: Optional[str] = None):

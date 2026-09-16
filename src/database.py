@@ -46,6 +46,27 @@ def init_database():
         )
     """)
 
+    # Fleet persistence tables: routes and reservations
+    connection.execute("""
+        CREATE TABLE IF NOT EXISTS routes (
+            route_id TEXT PRIMARY KEY,
+            origin TEXT NOT NULL,
+            destination TEXT NOT NULL,
+            capacity INTEGER NOT NULL,
+            booked_seats INTEGER NOT NULL DEFAULT 0
+        )
+    """)
+
+    connection.execute("""
+        CREATE TABLE IF NOT EXISTS reservations (
+            reservation_id TEXT PRIMARY KEY,
+            ticket_id TEXT NOT NULL,
+            route_id TEXT NOT NULL,
+            created_at REAL NOT NULL,
+            FOREIGN KEY(route_id) REFERENCES routes(route_id)
+        )
+    """)
+
     connection.commit()
     connection.close()
 
@@ -205,3 +226,9 @@ def get_user_tickets(email: str):
         ticket.qr_code = row["qr_code"]
         tickets.append(ticket)
     return tickets
+
+
+if __name__ == "__main__":
+    init_database()
+    print("Database initialized successfully.")
+

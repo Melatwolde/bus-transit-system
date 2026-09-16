@@ -11,9 +11,9 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 sh '''
-                    python3 -m venv venv
-                    ./venv/bin/python -m pip install --upgrade pip
-                    ./venv/bin/pip install -r requirements.txt
+                    python3 -m venv .venv
+                    .venv/bin/pip install --upgrade pip
+                    .venv/bin/pip install -r requirements.txt
                 '''
             }
         }
@@ -21,7 +21,7 @@ pipeline {
         stage('Unit & Integration Tests (Coverage Gate)') {
             steps {
                 sh '''
-                    PYTHONPATH=. ./venv/bin/pytest tests/integration/test_app_endpoints.py \
+                    PYTHONPATH=. .venv/bin/pytest tests/integration/test_app_endpoints.py \
                         -W ignore::DeprecationWarning \
                         --cov=src.app \
                         --cov-branch \
@@ -41,6 +41,12 @@ pipeline {
     post {
         always {
             cleanWs()
+        }
+        success {
+            echo "Jenkins Build Status: GREEN - All suites passed and coverage gate met!"
+        }
+        failure {
+            echo "Jenkins Build Status: RED - Defect detected or coverage dropped below 80%!"
         }
     }
 }

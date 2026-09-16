@@ -27,5 +27,7 @@ def clean_database():
     # Delete all data from tables
     connection.execute("DELETE FROM tickets")
     connection.execute("DELETE FROM users")
+    connection.execute("DELETE FROM reservations")
+    connection.execute("UPDATE routes SET booked_seats = 0")
     connection.commit()
     connection.close()

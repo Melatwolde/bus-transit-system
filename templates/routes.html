@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Addis Transit - Active Routes</title>
+    <title>Digital Bus System - Active Routes</title>
     <style>
       :root {
         --bg-base: #121212;
@@ -206,7 +206,7 @@
   <body>
     <header>
       <div class="brand-logo" id="nav-brand" data-testid="nav-brand">
-        <span>Dispatch</span>IQ
+        <span>Digital</span> Bus System
       </div>
       <nav>
         <a href="/" id="nav-home" data-testid="nav-home">Home</a>
@@ -253,6 +253,7 @@
               <th>Departure Frequency</th>
               <th>Peak Windows</th>
               <th>Status</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
@@ -271,6 +272,11 @@
                   >Off-Peak</span
                 >
                 {% endif %}
+              </td>
+              <td>
+                <a href="/routes/{{ row.route_id }}/book" class="btn-cta btn-cta-primary" data-testid="book-{{ row.route_id }}">
+                  {% if user %}Book Now{% else %}Book (Guest){% endif %}
+                </a>
               </td>
             </tr>
             {% endfor %}

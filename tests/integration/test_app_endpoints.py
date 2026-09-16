@@ -1,6 +1,19 @@
 from fastapi.testclient import TestClient
 from src.app import app
 from src.ticket import ChapaTestPaymentGateway
+from src import database
+
+
+def reset_route_booked(route_id: str, capacity: int | None = None):
+    conn = database.get_connection()
+    try:
+        if capacity is not None:
+            conn.execute("UPDATE routes SET capacity = ? WHERE route_id = ?", (capacity, route_id))
+        conn.execute("UPDATE routes SET booked_seats = 0 WHERE route_id = ?", (route_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
 
 client = TestClient(app)
 
@@ -40,6 +53,7 @@ def test_dashboard_redirects_unauthenticated():
     assert res.status_code in [302, 303, 307]
 
 def test_booking_and_ticket_lifecycle_flow():
+    reset_route_booked("R-101", capacity=10)
     # 1. Book ticket
     book_res = client.post(
         "/book",
@@ -89,6 +103,7 @@ def test_ticket_not_found_branches():
 def test_pay_ticket_with_chapa_gateway(monkeypatch):
     from src import database
 
+    reset_route_booked("R-101", capacity=10)
     monkeypatch.setenv("CHAPA_SECRET_KEY", "CHASECK_TEST-dummy-key")
 
     class MockResponse:
@@ -144,6 +159,7 @@ def test_pay_ticket_with_chapa_gateway(monkeypatch):
 def test_pay_ticket_with_chapa_logged_in_user(monkeypatch):
     from src import database
 
+    reset_route_booked("R-101", capacity=10)
     monkeypatch.setenv("CHAPA_SECRET_KEY", "CHASECK_TEST-dummy-key")
 
     captured_payload = {}
@@ -202,6 +218,7 @@ def test_pay_ticket_with_chapa_logged_in_user(monkeypatch):
 def test_pay_ticket_with_telebirr_gateway():
     from src import database
 
+    reset_route_booked("R-202", capacity=10)
     book_res = client.post(
         "/book",
         data={

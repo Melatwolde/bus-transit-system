@@ -12,17 +12,30 @@ class BookingPage:
         self.error_text = (By.ID, "error_msg")
 
     def book(self, name: str, age: int, is_peak=False, is_frequent=False, is_holiday=False):
-        self.driver.find_element(*self.name_field).clear()
-        self.driver.find_element(*self.name_field).send_keys(name)
-        self.driver.find_element(*self.age_field).clear()
-        self.driver.find_element(*self.age_field).send_keys(str(age))
+        name_el = self.driver.find_element(*self.name_field)
+        name_el.clear()
+        name_el.send_keys(name)
+
+        age_el = self.driver.find_element(*self.age_field)
+        age_el.clear()
+        age_el.send_keys(str(age))
+
         if is_peak:
-            self.driver.find_element(*self.peak_box).click()
+            peak_el = self.driver.find_element(*self.peak_box)
+            if not peak_el.is_selected():
+                peak_el.click()
         if is_frequent:
-            self.driver.find_element(*self.frequent_box).click()
+            freq_el = self.driver.find_element(*self.frequent_box)
+            if not freq_el.is_selected():
+                freq_el.click()
         if is_holiday:
-            self.driver.find_element(*self.holiday_box).click()
-        self.driver.find_element(*self.submit_button).click()
+            hol_el = self.driver.find_element(*self.holiday_box)
+            if not hol_el.is_selected():
+                hol_el.click()
+
+        btn = self.driver.find_element(*self.submit_button)
+        self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn)
+        btn.click()
 
     def get_error(self) -> str:
         return self.driver.find_element(*self.error_text).text
