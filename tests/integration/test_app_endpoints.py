@@ -87,7 +87,7 @@ def test_ticket_not_found_branches():
 
 
 def test_pay_ticket_with_chapa_gateway(monkeypatch):
-    from src.app import tickets_db
+    from src import database
 
     monkeypatch.setenv("CHAPA_SECRET_KEY", "CHASECK_TEST-dummy-key")
 
@@ -137,12 +137,12 @@ def test_pay_ticket_with_chapa_gateway(monkeypatch):
     # 3. Simulate return callback
     return_res = client.get(f"/payment/return/{ticket_id}", follow_redirects=False)
     assert return_res.status_code == 303
-    ticket = tickets_db[ticket_id]
+    ticket = database.get_ticket(ticket_id)
     assert ticket.state == "PAID"
 
 
 def test_pay_ticket_with_chapa_logged_in_user(monkeypatch):
-    from src.app import tickets_db
+    from src import database
 
     monkeypatch.setenv("CHAPA_SECRET_KEY", "CHASECK_TEST-dummy-key")
 
@@ -196,11 +196,11 @@ def test_pay_ticket_with_chapa_logged_in_user(monkeypatch):
 
     # Simulate return callback for logged in user test as well
     user_client.get(f"/payment/return/{ticket_id}", follow_redirects=False)
-    assert tickets_db[ticket_id].state == "PAID"
+    assert database.get_ticket(ticket_id).state == "PAID"
 
 
 def test_pay_ticket_with_telebirr_gateway():
-    from src.app import tickets_db
+    from src import database
 
     book_res = client.post(
         "/book",
@@ -220,4 +220,4 @@ def test_pay_ticket_with_telebirr_gateway():
         follow_redirects=False
     )
     assert pay_res.status_code == 303
-    assert tickets_db[ticket_id].state == "PAID"
+    assert database.get_ticket(ticket_id).state == "PAID"
